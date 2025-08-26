@@ -112,7 +112,7 @@ const ConstellationFieldBackground: React.FC<ConstellationFieldProps> = ({
 
         if (draggingRef.current) {
           p.trail?.push({ x: p.x, y: p.y });
-          if (p.trail?.length && p.trail.length > 20) p.trail.shift();
+          if (p.trail.length > 20) p.trail.shift();
         } else {
           p.trail = [];
         }

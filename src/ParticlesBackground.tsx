@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { useColorMode } from './useColorMode'
 
 interface Particle {
   x: number;
@@ -41,11 +42,12 @@ interface ParticlesBackgroundProps {
 const ParticlesBackground: React.FC<ParticlesBackgroundProps> = ({
   particleCount = null,
   mouseRadius = 150,
-  particleColor = 'rgba(255, 255, 255, 0.8)',
-  connectionColor = 'rgba(255, 255, 255, 0.1)',
-  rippleColor = 'rgba(255, 255, 255, 0.8)',
+  particleColor: propParticleColor,
+  connectionColor: propConnectionColor,
+  rippleColor: propRippleColor,
   className = '',
 }) => {
+  const mode = useColorMode();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number | null>(null);
   const particlesRef = useRef<Particle[]>([]);
