@@ -27,14 +27,35 @@ interface OrbitClusterBackgroundProps {
   particlesPerCluster?: number;
   color?: string;
   className?: string;
+  orbitDistanceMin?: number;
+  orbitDistanceMax?: number;
+  orbitSpeedMin?: number;
+  orbitSpeedMax?: number;
+  particleSizeMin?: number;
+  particleSizeMax?: number;
+  gravityWarpStrength?: number;
+  gravityWarpDecay?: number;
+  parallaxMultiplier?: number;
 }
 
+import { useColorMode } from './useColorMode';
 const OrbitClusterBackground: React.FC<OrbitClusterBackgroundProps> = ({
   clusterCount = 6,
   particlesPerCluster = 25,
-  color = 'rgba(255, 255, 255, 0.9)',
+  color: propColor,
   className = '',
+  orbitDistanceMin = 20,
+  orbitDistanceMax = 80,
+  orbitSpeedMin = 0.001,
+  orbitSpeedMax = 0.004,
+  particleSizeMin = 0.8,
+  particleSizeMax = 2.5,
+  gravityWarpStrength = 20,
+  gravityWarpDecay = 0.9,
+  parallaxMultiplier = 0.001
 }) => {
+  const mode = useColorMode();
+  const color = propColor || (mode === 'dark' ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.7)');
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number>();
   const clustersRef = useRef<Cluster[]>([]);
@@ -66,9 +87,9 @@ const OrbitClusterBackground: React.FC<OrbitClusterBackgroundProps> = ({
         for (let j = 0; j < particlesPerCluster; j++) {
           cluster.particles.push({
             angle: Math.random() * Math.PI * 2,
-            distance: 20 + Math.random() * 60,
-            speed: 0.002 + Math.random() * 0.004,
-            size: 1 + Math.random() * 2,
+            distance: orbitDistanceMin + Math.random() * (orbitDistanceMax - orbitDistanceMin),
+            speed: orbitSpeedMin + Math.random() * (orbitSpeedMax - orbitSpeedMin),
+            size: particleSizeMin + Math.random() * (particleSizeMax - particleSizeMin),
             opacity: 0.4 + Math.random() * 0.6,
             depth: 0.5 + Math.random() * 0.5,
           });
@@ -101,8 +122,8 @@ const OrbitClusterBackground: React.FC<OrbitClusterBackgroundProps> = ({
           }
 
           // Parallax with mouse
-          const offsetX = (mouseRef.current.x - width / 2) * 0.001 * p.depth;
-          const offsetY = (mouseRef.current.y - height / 2) * 0.001 * p.depth;
+          const offsetX = (mouseRef.current.x - width / 2) * parallaxMultiplier * p.depth;
+          const offsetY = (mouseRef.current.y - height / 2) * parallaxMultiplier * p.depth;
 
           const x = cluster.x + dX + offsetX * 100;
           const y = cluster.y + dY + offsetY * 100;

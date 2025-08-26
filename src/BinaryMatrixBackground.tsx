@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-
+import { useColorMode } from './useColorMode';
 interface BinaryMatrixBackgroundProps {
   fontSize?: number;
   fontFamily?: string;
@@ -11,20 +11,33 @@ interface BinaryMatrixBackgroundProps {
   trailLength?: number;
   charSet?: string[];
   charChangeRate?: number;
+  // Additional controls
+  rippleGrowthRate?: number; // default 3
+  rippleFadeRate?: number; // default 0.015
+  rippleLineWidth?: number; // default 2
+  mouseAffectRadius?: number; // default 200
 }
+
 
 const BinaryMatrixBackground: React.FC<BinaryMatrixBackgroundProps> = ({
   fontSize = 18,
   fontFamily = 'Space Grotesk',
-  color = 'rgba(0, 255, 0, 0.8)',
-  rippleColor = 'rgba(0, 255, 127, 0.5)',
+  color: propColor,
+  rippleColor: propRippleColor,
   density = 0.05,
   className = '',
   flickerSpeed = 0.05,
   trailLength = 15,
   charSet = ['0', '1'],
-  charChangeRate = 0.1
+  charChangeRate = 0.1,
+  rippleGrowthRate = 3,
+  rippleFadeRate = 0.015,
+  rippleLineWidth = 2,
+  mouseAffectRadius = 200
 }) => {
+  const mode = useColorMode();
+  const color = propColor || (mode === 'dark' ? 'rgba(0,255,0,0.8)' : 'rgba(0,80,0,0.7)');
+  const rippleColor = propRippleColor || (mode === 'dark' ? 'rgba(0,255,127,0.5)' : 'rgba(0,0,0,0.08)');
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number>();
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -119,13 +132,13 @@ const BinaryMatrixBackground: React.FC<BinaryMatrixBackgroundProps> = ({
       
       // Update ripple effects
       rippleRef.current = rippleRef.current.filter(ripple => {
-        ripple.radius += 3;
-        ripple.opacity -= 0.015;
+        ripple.radius += rippleGrowthRate;
+        ripple.opacity -= rippleFadeRate;
         return ripple.opacity > 0;
       });
 
       // Draw ripples
-      ctx.lineWidth = 2;
+      ctx.lineWidth = rippleLineWidth;
       rippleRef.current.forEach(ripple => {
         ctx.globalAlpha = ripple.opacity;
         ctx.strokeStyle = rippleColor;
@@ -155,7 +168,7 @@ const BinaryMatrixBackground: React.FC<BinaryMatrixBackgroundProps> = ({
         );
         
         // Determine if mouse is affecting this column
-        const isAffected = distToMouse < 200 && mouseRef.current.intensity > 0.1;
+        const isAffected = distToMouse < mouseAffectRadius && mouseRef.current.intensity > 0.1;
         
         for (let i = 0; i < yPositions.length; i++) {
           // Move character down

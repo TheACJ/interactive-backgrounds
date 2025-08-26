@@ -37,6 +37,16 @@ interface ParticlesBackgroundProps {
   connectionColor?: string;
   rippleColor?: string;
   className?: string;
+  // Particle behavior
+  particleSizeMin?: number;
+  particleSizeMax?: number;
+  particleSpeedMultiplier?: number;
+  connectionDistance?: number;
+  connectionOpacityMultiplier?: number;
+  // Ripple controls
+  rippleMaxRadius?: number;
+  rippleGrowthRate?: number;
+  rippleLineWidth?: number;
 }
 
 const ParticlesBackground: React.FC<ParticlesBackgroundProps> = ({
@@ -46,8 +56,20 @@ const ParticlesBackground: React.FC<ParticlesBackgroundProps> = ({
   connectionColor: propConnectionColor,
   rippleColor: propRippleColor,
   className = '',
+  particleSizeMin = 0.5,
+  particleSizeMax = 3,
+  particleSpeedMultiplier = 1,
+  connectionDistance = 120,
+  connectionOpacityMultiplier = 0.3,
+  rippleMaxRadius = 150,
+  rippleGrowthRate = 3,
+  rippleLineWidth = 2
 }) => {
   const mode = useColorMode();
+  // Theme-aware color defaults
+  const particleColor = propParticleColor || (mode === 'dark' ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.7)');
+  const connectionColor = propConnectionColor || (mode === 'dark' ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.08)');
+  const rippleColor = propRippleColor || (mode === 'dark' ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.08)');
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number | null>(null);
   const particlesRef = useRef<Particle[]>([]);
@@ -74,9 +96,9 @@ const ParticlesBackground: React.FC<ParticlesBackgroundProps> = ({
 
       for (let i = 0; i < count; i++) {
         const isShooter = Math.random() < 0.05;
-        const radius = isShooter ? 0.5 : Math.random() * 2 + 1;
-        const vx = (Math.random() - 0.5) * (isShooter ? 2 : 0.5);
-        const vy = (Math.random() - 0.5) * (isShooter ? 2 : 0.5);
+        const radius = isShooter ? particleSizeMin : particleSizeMin + Math.random() * (particleSizeMax - particleSizeMin);
+        const vx = (Math.random() - 0.5) * (isShooter ? 2 * particleSpeedMultiplier : 0.5 * particleSpeedMultiplier);
+        const vy = (Math.random() - 0.5) * (isShooter ? 2 * particleSpeedMultiplier : 0.5 * particleSpeedMultiplier);
         particlesRef.current.push({
           x: Math.random() * canvas.width,
           y: Math.random() * canvas.height,
@@ -100,7 +122,7 @@ const ParticlesBackground: React.FC<ParticlesBackgroundProps> = ({
           y: Math.random() * canvas.height,
           vx: 0,
           vy: 0,
-          radius: Math.random() * 1.2,
+          radius: Math.random() * (particleSizeMax * 0.5),
           opacity: Math.random() * 0.3,
           randomSpeed: 0,
           randomDirection: 0,
@@ -132,8 +154,8 @@ const ParticlesBackground: React.FC<ParticlesBackgroundProps> = ({
         const distance = Math.sqrt(dx * dx + dy * dy);
         if (distance < mouseRadius) {
           const force = (mouseRadius - distance) / mouseRadius;
-          particle.vx += dx * force * 0.008;
-          particle.vy += dy * force * 0.008;
+          particle.vx += dx * force * 0.008 * particleSpeedMultiplier;
+          particle.vy += dy * force * 0.008 * particleSpeedMultiplier;
         }
 
         ripplesRef.current.forEach((ripple: Ripple) => {
@@ -168,7 +190,7 @@ const ParticlesBackground: React.FC<ParticlesBackgroundProps> = ({
         const maxDistance = Math.min(canvas.width, canvas.height) * 0.4;
 
         if (centerDistance > maxDistance) {
-          const returnForce = ((centerDistance - maxDistance) / centerDistance) * 0.001;
+          const returnForce = ((centerDistance - maxDistance) / centerDistance) * 0.001 * particleSpeedMultiplier;
           particle.vx += (centerX - particle.x) * returnForce;
           particle.vy += (centerY - particle.y) * returnForce;
         }
@@ -181,7 +203,7 @@ const ParticlesBackground: React.FC<ParticlesBackgroundProps> = ({
     const updateRipples = (): void => {
       ripplesRef.current = ripplesRef.current.filter((ripple: Ripple) => {
         if (ripple.growing) {
-          ripple.radius += 3;
+          ripple.radius += rippleGrowthRate;
           ripple.opacity = 1 - ripple.radius / ripple.maxRadius;
           if (ripple.radius >= ripple.maxRadius) ripple.growing = false;
           return true;
@@ -194,18 +216,14 @@ const ParticlesBackground: React.FC<ParticlesBackgroundProps> = ({
       backgroundRef.current.forEach((particle) => {
         ctx.beginPath();
         ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
-        ctx.fillStyle = particleColor.includes('rgba')
-          ? particleColor.replace(/[\d.]+(?=\))/, (particle.opacity * 0.5).toString())
-          : `rgba(255, 255, 255, ${particle.opacity * 0.5})`;
+        ctx.fillStyle = particleColor.replace(/([\d.]+)(?=\))/, (particle.opacity * 0.5).toString());
         ctx.fill();
       });
 
       particlesRef.current.forEach((particle: Particle) => {
         ctx.beginPath();
         ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
-        ctx.fillStyle = particleColor.includes('rgba')
-          ? particleColor.replace(/[\d.]+(?=\))/, particle.opacity.toString())
-          : `rgba(255, 255, 255, ${particle.opacity})`;
+        ctx.fillStyle = particleColor.replace(/([\d.]+)(?=\))/, particle.opacity.toString());
         ctx.fill();
 
         if (particle.shooting) {
@@ -226,11 +244,9 @@ const ParticlesBackground: React.FC<ParticlesBackgroundProps> = ({
           const dx = particlesRef.current[i].x - particlesRef.current[j].x;
           const dy = particlesRef.current[i].y - particlesRef.current[j].y;
           const distance = Math.sqrt(dx * dx + dy * dy);
-          if (distance < 120) {
-            const opacity = (120 - distance) / 120 * 0.3;
-            ctx.strokeStyle = connectionColor.includes('rgba')
-              ? connectionColor.replace(/[\d.]+(?=\))/, opacity.toString())
-              : `rgba(255, 255, 255, ${opacity})`;
+          if (distance < connectionDistance) {
+            const opacity = (connectionDistance - distance) / connectionDistance * connectionOpacityMultiplier;
+            ctx.strokeStyle = connectionColor.replace(/([\d.]+)(?=\))/, opacity.toString());
             ctx.beginPath();
             ctx.moveTo(particlesRef.current[i].x, particlesRef.current[i].y);
             ctx.lineTo(particlesRef.current[j].x, particlesRef.current[j].y);
@@ -244,10 +260,8 @@ const ParticlesBackground: React.FC<ParticlesBackgroundProps> = ({
       ripplesRef.current.forEach((ripple: Ripple) => {
         ctx.beginPath();
         ctx.arc(ripple.x, ripple.y, ripple.radius, 0, Math.PI * 2);
-        ctx.strokeStyle = rippleColor.includes('rgba')
-          ? rippleColor.replace(/[\d.]+(?=\))/, (ripple.opacity * 0.8).toString())
-          : `rgba(255, 255, 255, ${ripple.opacity * 0.8})`;
-        ctx.lineWidth = 2;
+        ctx.strokeStyle = rippleColor.replace(/([\d.]+)(?=\))/, (ripple.opacity * 0.8).toString());
+        ctx.lineWidth = rippleLineWidth;
         ctx.stroke();
       });
     };

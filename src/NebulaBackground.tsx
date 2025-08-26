@@ -10,14 +10,26 @@ interface NebulaBackgroundProps {
   glowColor?: string;
   intensity?: number;
   className?: string;
+  blobCount?: number;
+  blobRadiusMin?: number;
+  blobRadiusMax?: number;
+  gradientSpread?: number; // multiplier for radial gradient size
 }
 
+import { useColorMode } from './useColorMode';
 const NebulaBackground: React.FC<NebulaBackgroundProps> = ({
-  baseColor = 'rgba(20, 0, 40, 0.3)',
-  glowColor = 'rgba(255, 100, 200, 0.08)',
+  baseColor: propBaseColor,
+  glowColor: propGlowColor,
   intensity = 1,
   className = '',
+  blobCount = 10,
+  blobRadiusMin = 40,
+  blobRadiusMax = 140,
+  gradientSpread = 0.75,
 }) => {
+  const mode = useColorMode();
+  const baseColor = propBaseColor || (mode === 'dark' ? 'rgba(20,0,40,0.3)' : 'rgba(255,255,255,0.7)');
+  const glowColor = propGlowColor || (mode === 'dark' ? 'rgba(255,100,200,0.08)' : 'rgba(0,0,0,0.08)');
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number | null>(null);
   const mouseRef = useRef<MousePosition>({ x: 0, y: 0 });
@@ -56,12 +68,12 @@ const NebulaBackground: React.FC<NebulaBackgroundProps> = ({
       ctx.fillRect(0, 0, width, height);
 
       // Nebula blobs
-      for (let i = 0; i < 10 * intensity; i++) {
+      for (let i = 0; i < Math.max(1, Math.floor(blobCount * intensity)); i++) {
         const x = Math.sin(time + i) * width * 0.5 + width / 2;
         const y = Math.cos(time * 0.7 + i * 0.3) * height * 0.4 + height / 2;
-        const radius = Math.sin(time * 0.5 + i) * 60 + 100;
+        const radius = Math.abs(Math.sin(time * 0.5 + i)) * (blobRadiusMax - blobRadiusMin) + blobRadiusMin;
 
-        const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+        const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius * gradientSpread);
         gradient.addColorStop(0, glowColor);
         gradient.addColorStop(1, 'transparent');
 

@@ -25,13 +25,16 @@ interface TextParticlesProps {
   className?: string;
 }
 
+import { useColorMode } from './useColorMode';
 const TextParticlesBackground: React.FC<TextParticlesProps> = ({
   text = 'The ACJ',
   fontSize = 120,
   density = 4,
-  color = 'rgba(255, 255, 255, 0.9)',
+  color: propColor,
   className = '',
 }) => {
+  const mode = useColorMode();
+  const color = propColor || (mode === 'dark' ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.7)');
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number | null>(null);
   const particlesRef = useRef<Particle[]>([]);

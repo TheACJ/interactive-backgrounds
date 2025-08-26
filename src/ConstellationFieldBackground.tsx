@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { useColorMode } from './useColorMode';
 
 interface StarParticle {
   x: number;
@@ -38,18 +39,57 @@ interface ConstellationFieldProps {
   maxDistance?: number;
   className?: string;
   constfill?: string;
+  // Particle behavior
+  particleSpeed?: number; // base speed multiplier
+  particleRadiusMin?: number;
+  particleRadiusMax?: number;
+  pulseMin?: number;
+  pulseMax?: number;
+  // Shooting stars
+  shootingStarChance?: number; // default 0.01
+  shootingStarSpeedMin?: number;
+  shootingStarSpeedMax?: number;
+  shootingStarLengthMin?: number;
+  shootingStarLengthMax?: number;
+  shootingStarLineWidth?: number;
+  shootingStarLifeDecay?: number;
+  // Constellation names
+  nameSpawnRate?: number; // default 0.002
+  nameFadeRate?: number; // default 0.003
+  // Trails & connections
+  trailMaxLength?: number;
+  connectionLineWidth?: number;
 }
 
 const NAMES = ['TheACJ', 'Agbai', 'Chisom', 'Joshua', 'ACJ', 'TheACJ Labs'];
 
 const ConstellationFieldBackground: React.FC<ConstellationFieldProps> = ({
-  particleColor = 'rgba(255, 255, 255, 0.7)',
-  connectionColor = 'rgba(255, 255, 255, 0.2)',
+  particleColor: propParticleColor,
+  connectionColor: propConnectionColor,
   particleCount = 120,
   maxDistance = 120,
   className = '',
   constfill = 'white',
+  particleSpeed = 0.6,
+  particleRadiusMin = 0.5,
+  particleRadiusMax = 1.7,
+  pulseMin = 0.5,
+  pulseMax = 2.0,
+  shootingStarChance = 0.01,
+  shootingStarSpeedMin = 2,
+  shootingStarSpeedMax = 6,
+  shootingStarLengthMin = 40,
+  shootingStarLengthMax = 100,
+  shootingStarLineWidth = 2,
+  shootingStarLifeDecay = 0.01,
+  nameSpawnRate = 0.002,
+  nameFadeRate = 0.003,
+  trailMaxLength = 20,
+  connectionLineWidth = 1,
 }) => {
+  const mode = useColorMode();
+  const particleColor = propParticleColor || (mode === 'dark' ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.5)');
+  const connectionColor = propConnectionColor || (mode === 'dark' ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.08)');
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number | null>(null);
   const particlesRef = useRef<StarParticle[]>([]);
@@ -80,10 +120,10 @@ const ConstellationFieldBackground: React.FC<ConstellationFieldProps> = ({
         particlesRef.current.push({
           x: Math.random() * width,
           y: Math.random() * height,
-          vx: (Math.random() - 0.5) * 0.6,
-          vy: (Math.random() - 0.5) * 0.6,
-          radius: Math.random() * 1.2 + 0.5,
-          pulse: Math.random() * 1.5 + 0.5,
+          vx: (Math.random() - 0.5) * particleSpeed,
+          vy: (Math.random() - 0.5) * particleSpeed,
+          radius: Math.random() * (particleRadiusMax - particleRadiusMin) + particleRadiusMin,
+          pulse: Math.random() * (pulseMax - pulseMin) + pulseMin,
           trail: [],
         });
       }
@@ -112,7 +152,7 @@ const ConstellationFieldBackground: React.FC<ConstellationFieldProps> = ({
 
         if (draggingRef.current) {
           p.trail?.push({ x: p.x, y: p.y });
-          if (p.trail.length > 20) p.trail.shift();
+          if (p.trail?.length && p.trail.length > trailMaxLength) p.trail.shift();
         } else {
           p.trail = [];
         }
@@ -120,13 +160,13 @@ const ConstellationFieldBackground: React.FC<ConstellationFieldProps> = ({
     };
 
     const updateShootingStars = () => {
-      if (Math.random() < 0.01) {
+      if (Math.random() < shootingStarChance) {
         shootingStarsRef.current.push({
           x: Math.random() * canvas.width,
           y: Math.random() * canvas.height * 0.5,
-          vx: -Math.random() * 4 - 2,
-          vy: Math.random() * 2,
-          length: Math.random() * 60 + 40,
+          vx: -Math.random() * (shootingStarSpeedMax - shootingStarSpeedMin) - shootingStarSpeedMin,
+          vy: Math.random() * (shootingStarSpeedMax - shootingStarSpeedMin) - shootingStarSpeedMin,
+          length: Math.random() * (shootingStarLengthMax - shootingStarLengthMin) + shootingStarLengthMin,
           life: 1,
         });
       }
@@ -134,12 +174,12 @@ const ConstellationFieldBackground: React.FC<ConstellationFieldProps> = ({
       shootingStarsRef.current.forEach((s) => {
         s.x += s.vx;
         s.y += s.vy;
-        s.life -= 0.01;
+        s.life -= shootingStarLifeDecay;
       });
     };
 
     const updateConstellationNames = () => {
-      if (Math.random() < 0.002) {
+      if (Math.random() < nameSpawnRate) {
         constellationNamesRef.current.push({
           x: Math.random() * canvas.width,
           y: Math.random() * canvas.height * 0.8 + 50,
@@ -149,7 +189,7 @@ const ConstellationFieldBackground: React.FC<ConstellationFieldProps> = ({
       }
       constellationNamesRef.current = constellationNamesRef.current.filter((n) => n.opacity > 0);
       constellationNamesRef.current.forEach((n) => {
-        n.opacity -= 0.003;
+        n.opacity -= nameFadeRate;
       });
     };
 
@@ -190,7 +230,7 @@ const ConstellationFieldBackground: React.FC<ConstellationFieldProps> = ({
           if (distance < maxDistance) {
             const opacity = (maxDistance - distance) / maxDistance;
             ctx.strokeStyle = connectionColor.replace(/\d?\.\d+(?=\))/, opacity.toFixed(2));
-            ctx.lineWidth = 1;
+            ctx.lineWidth = connectionLineWidth;
             ctx.beginPath();
             ctx.moveTo(p1.x, p1.y);
             ctx.lineTo(p2.x, p2.y);
@@ -206,7 +246,7 @@ const ConstellationFieldBackground: React.FC<ConstellationFieldProps> = ({
         ctx.moveTo(s.x, s.y);
         ctx.lineTo(s.x + s.length, s.y + s.length * 0.2);
         ctx.strokeStyle = 'rgba(255,255,255,0.5)';
-        ctx.lineWidth = 2;
+        ctx.lineWidth = shootingStarLineWidth;
         ctx.stroke();
       });
     };

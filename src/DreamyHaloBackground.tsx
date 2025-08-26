@@ -5,14 +5,28 @@ interface DreamyHaloBackgroundProps {
   className?: string;
   blurOverlay?: boolean;
   overlayOpacity?: number;
+  haloCount?: number;
+  haloRadiusMin?: number;
+  haloRadiusMax?: number;
+  pulseAmplitude?: number;
+  saturation?: number;
+  lightness?: number;
 }
 
+import { useColorMode } from './useColorMode';
 const DreamyHaloBackground: React.FC<DreamyHaloBackgroundProps> = ({
   baseHue = 280,
   className = '',
   blurOverlay = true,
   overlayOpacity = 0.3,
+  haloCount = 20,
+  haloRadiusMin = 50,
+  haloRadiusMax = 150,
+  pulseAmplitude = 20,
+  saturation = 100,
+  lightness = 85,
 }) => {
+  const mode = useColorMode();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number | null>(null);
 
@@ -30,11 +44,11 @@ const DreamyHaloBackground: React.FC<DreamyHaloBackgroundProps> = ({
 
     const generateHalos = () => {
       const halos = [];
-      for (let i = 0; i < 20; i++) {
+      for (let i = 0; i < haloCount; i++) {
         halos.push({
           x: Math.random() * canvas.width,
           y: Math.random() * canvas.height,
-          r: Math.random() * 100 + 50,
+          r: Math.random() * (haloRadiusMax - haloRadiusMin) + haloRadiusMin,
           phase: Math.random() * Math.PI * 2,
         });
       }
@@ -48,7 +62,7 @@ const DreamyHaloBackground: React.FC<DreamyHaloBackgroundProps> = ({
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       halos.forEach((halo, index) => {
-        const pulse = Math.sin(time + halo.phase) * 20;
+        const pulse = Math.sin(time + halo.phase) * pulseAmplitude;
         const gradient = ctx.createRadialGradient(
           halo.x,
           halo.y,
@@ -60,8 +74,8 @@ const DreamyHaloBackground: React.FC<DreamyHaloBackgroundProps> = ({
 
         const hueShift = (baseHue + index * 10 + time * 10) % 360;
 
-        gradient.addColorStop(0, `hsla(${hueShift}, 100%, 85%, 0.25)`);
-        gradient.addColorStop(1, `hsla(${hueShift}, 100%, 85%, 0)`);
+        gradient.addColorStop(0, `hsla(${hueShift}, ${saturation}%, ${lightness}%, 0.25)`);
+        gradient.addColorStop(1, `hsla(${hueShift}, ${saturation}%, ${lightness}%, 0)`);
 
         ctx.beginPath();
         ctx.fillStyle = gradient;
@@ -80,7 +94,7 @@ const DreamyHaloBackground: React.FC<DreamyHaloBackgroundProps> = ({
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
       window.removeEventListener('resize', resize);
     };
-  }, [baseHue]);
+  }, [baseHue, haloCount, haloRadiusMin, haloRadiusMax, pulseAmplitude, saturation, lightness]);
 
   return (
     <>

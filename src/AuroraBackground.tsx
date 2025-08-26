@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { useColorMode } from './useColorMode';
 
 interface Ripple {
   x: number;
@@ -18,13 +19,33 @@ interface AuroraBackgroundProps {
   mouseRadius?: number;
   rippleColor?: string;
   className?: string;
+  // Wave controls
+  layers?: number; // default 5
+  baseWaveHeight?: number; // default 30
+  waveSpacing?: number; // default 10
+  waveSpeed?: number; // default 0.5
+  lineWidthBase?: number; // default 2
+  // Ripple controls
+  rippleMaxRadius?: number; // default 120
+  rippleGrowthRate?: number; // default 3 (px per frame)
+  rippleLineWidth?: number; // default 2
 }
 
 const AuroraBackground: React.FC<AuroraBackgroundProps> = ({
   mouseRadius = 150,
-  rippleColor = 'rgba(255, 255, 255, 0.2)',
+  rippleColor: propRippleColor,
   className = '',
+  layers = 5,
+  baseWaveHeight = 30,
+  waveSpacing = 10,
+  waveSpeed = 0.5,
+  lineWidthBase = 2,
+  rippleMaxRadius = 120,
+  rippleGrowthRate = 3,
+  rippleLineWidth = 2
 }) => {
+  const mode = useColorMode();
+  const rippleColor = propRippleColor || (mode === 'dark' ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.08)');
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number | null>(null);
   const ripplesRef = useRef<Ripple[]>([]);
@@ -45,17 +66,16 @@ const AuroraBackground: React.FC<AuroraBackgroundProps> = ({
     const drawAuroraWave = (time: number) => {
       const { width, height } = canvas;
       ctx.clearRect(0, 0, width, height);
-      const layers = 5;
 
       for (let layer = 0; layer < layers; layer++) {
         ctx.beginPath();
-        const waveHeight = 30 + layer * 10;
-        const waveOffset = time * 0.5 + layer * 50;
+        const waveHeight = baseWaveHeight + layer * waveSpacing;
+        const waveOffset = time * waveSpeed + layer * 50;
         const alpha = 0.05 + layer * 0.05;
         const hue = (time * 10 + layer * 50) % 360;
 
         ctx.strokeStyle = `hsla(${hue}, 100%, 70%, ${alpha})`;
-        ctx.lineWidth = 2 + layer * 1.5;
+        ctx.lineWidth = lineWidthBase + layer * 1.5;
 
         for (let x = 0; x <= width; x += 10) {
           const y =
@@ -78,7 +98,7 @@ const AuroraBackground: React.FC<AuroraBackgroundProps> = ({
     const drawRipples = () => {
       ripplesRef.current = ripplesRef.current.filter((ripple) => {
         if (ripple.growing) {
-          ripple.radius += 3;
+          ripple.radius += rippleGrowthRate;
           ripple.opacity = 1 - ripple.radius / ripple.maxRadius;
           if (ripple.radius >= ripple.maxRadius) ripple.growing = false;
           return true;
@@ -90,7 +110,7 @@ const AuroraBackground: React.FC<AuroraBackgroundProps> = ({
         ctx.beginPath();
         ctx.arc(ripple.x, ripple.y, ripple.radius, 0, Math.PI * 2);
         ctx.strokeStyle = rippleColor.replace(/[\d.]+(?=\))/, (ripple.opacity * 0.8).toString());
-        ctx.lineWidth = 2;
+        ctx.lineWidth = rippleLineWidth;
         ctx.stroke();
       });
     };
@@ -112,7 +132,7 @@ const AuroraBackground: React.FC<AuroraBackgroundProps> = ({
         x: e.clientX,
         y: e.clientY,
         radius: 0,
-        maxRadius: 120,
+        maxRadius: rippleMaxRadius,
         opacity: 1,
         growing: true,
       });
@@ -134,7 +154,7 @@ const AuroraBackground: React.FC<AuroraBackgroundProps> = ({
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('click', handleClick);
     };
-  }, [mouseRadius, rippleColor]);
+  }, [mouseRadius, rippleColor, layers, baseWaveHeight, waveSpacing, waveSpeed, lineWidthBase, rippleMaxRadius, rippleGrowthRate, rippleLineWidth]);
 
   return (
     <canvas

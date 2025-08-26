@@ -45,17 +45,25 @@ interface BasePair {
   trail: Array<{ x: number; y: number; opacity: number }>;
 }
 
+import { useColorMode } from './useColorMode';
 const DNASparkBackground: React.FC<DNASparkBackgroundProps> = ({
-  sparkColor = 'rgba(255, 255, 255, 0.8)',
-  strandColor = 'rgba(64, 224, 208, 0.6)',
+  sparkColor: propSparkColor,
+  strandColor: propStrandColor,
   className = '',
-  particleColor = 'rgba(255, 255, 255, 0.8)',
-  connectionColor = 'rgba(255, 255, 255, 0.1)',
-  rippleColor = 'rgba(255, 255, 255, 0.8)',
-  color = 'rgba(255, 255, 255, 0.8)',
+  particleColor: propParticleColor,
+  connectionColor: propConnectionColor,
+  rippleColor: propRippleColor,
+  color: propColor,
   constfill = 'white',
   text = 'THE ACJ'
 }) => {
+  const mode = useColorMode();
+  const sparkColor = propSparkColor || (mode === 'dark' ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.7)');
+  const strandColor = propStrandColor || (mode === 'dark' ? 'rgba(64,224,208,0.6)' : 'rgba(0,0,0,0.2)');
+  const particleColor = propParticleColor || (mode === 'dark' ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.7)');
+  const connectionColor = propConnectionColor || (mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)');
+  const rippleColor = propRippleColor || (mode === 'dark' ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.08)');
+  const color = propColor || (mode === 'dark' ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.7)');
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number>();
   const particlesRef = useRef<Particle[]>([]);

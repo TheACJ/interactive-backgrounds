@@ -16,13 +16,24 @@ interface FluidSmokeFlowProps {
   particleColor?: string;
   lineWidth?: number;
   className?: string;
+  particleCount?: number;
+  interactionRadius?: number;
+  interactionStrength?: number;
+  backgroundFadeAlpha?: number;
 }
 
+import { useColorMode } from './useColorMode';
 const FluidSmokeFlowBackground: React.FC<FluidSmokeFlowProps> = ({
-  particleColor = 'rgba(255, 255, 255, 0.15)',
+  particleColor: propParticleColor,
   lineWidth = 1,
   className = '',
+  particleCount = 300,
+  interactionRadius = 100,
+  interactionStrength = 0.3,
+  backgroundFadeAlpha = 0.08,
 }) => {
+  const mode = useColorMode();
+  const particleColor = propParticleColor || (mode === 'dark' ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)');
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number | null>(null);
   const particlesRef = useRef<FluidParticle[]>([]);
@@ -42,7 +53,7 @@ const FluidSmokeFlowBackground: React.FC<FluidSmokeFlowProps> = ({
     };
 
     const createParticles = (): void => {
-      const count = 300;
+      const count = particleCount;
       const width = canvas.width;
       const height = canvas.height;
       particlesRef.current = [];
@@ -61,7 +72,7 @@ const FluidSmokeFlowBackground: React.FC<FluidSmokeFlowProps> = ({
       const { width, height } = canvas;
 
       // Fading trail effect
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.08)';
+      ctx.fillStyle = `rgba(0, 0, 0, ${backgroundFadeAlpha})`;
       ctx.fillRect(0, 0, width, height);
 
       ctx.lineWidth = lineWidth;
@@ -72,11 +83,11 @@ const FluidSmokeFlowBackground: React.FC<FluidSmokeFlowProps> = ({
         const dy = mouseRef.current.y - p.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
 
-        if (dist < 100) {
-          const force = (100 - dist) / 100;
+        if (dist < interactionRadius) {
+          const force = (interactionRadius - dist) / interactionRadius;
           const angle = Math.atan2(dy, dx);
-          p.vx -= Math.cos(angle) * force * 0.3;
-          p.vy -= Math.sin(angle) * force * 0.3;
+          p.vx -= Math.cos(angle) * force * interactionStrength;
+          p.vy -= Math.sin(angle) * force * interactionStrength;
         }
 
         // Friction
@@ -127,7 +138,7 @@ const FluidSmokeFlowBackground: React.FC<FluidSmokeFlowProps> = ({
       window.removeEventListener('resize', resize);
       window.removeEventListener('mousemove', handleMouseMove);
     };
-  }, [particleColor, lineWidth]);
+  }, [particleColor, lineWidth, particleCount, interactionRadius, interactionStrength, backgroundFadeAlpha]);
 
   return (
     <canvas

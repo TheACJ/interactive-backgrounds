@@ -13,13 +13,21 @@ interface DataRainBackgroundProps {
   charChangeRate?: number;
   deflectionForce?: number;
   mouseGlowRadius?: number;
+  // Ripple controls
+  rippleGrowthRate?: number; // default 3
+  rippleFadeRate?: number; // default 0.015
+  rippleLineWidth?: number; // default 2
+  // Character speed controls
+  charSpeedMin?: number;
+  charSpeedMax?: number;
 }
 
+import { useColorMode } from './useColorMode';
 const DataRainBackground: React.FC<DataRainBackgroundProps> = ({
   fontSize = 18,
   fontFamily = 'Space Grotesk',
-  color = 'rgba(0, 255, 0, 0.8)',
-  rippleColor = 'rgba(0, 255, 127, 0.5)',
+  color: propColor,
+  rippleColor: propRippleColor,
   density = 0.05,
   className = '',
   flickerSpeed = 0.05,
@@ -27,8 +35,16 @@ const DataRainBackground: React.FC<DataRainBackgroundProps> = ({
   charSet = ['0', '1', 'あ', 'ｑ', 'Æ', 'Ψ'],
   charChangeRate = 0.1,
   deflectionForce = 50,
-  mouseGlowRadius = 80
+  mouseGlowRadius = 80,
+  rippleGrowthRate = 3,
+  rippleFadeRate = 0.015,
+  rippleLineWidth = 2,
+  charSpeedMin = 0.5,
+  charSpeedMax = 2.5
 }) => {
+  const mode = useColorMode();
+  const color = propColor || (mode === 'dark' ? 'rgba(0,255,0,0.8)' : 'rgba(0,80,0,0.7)');
+  const rippleColor = propRippleColor || (mode === 'dark' ? 'rgba(0,255,127,0.5)' : 'rgba(0,0,0,0.08)');
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number>();
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -122,7 +138,7 @@ const DataRainBackground: React.FC<DataRainBackgroundProps> = ({
         for (let j = 0; j < charCount; j++) {
           yPositions.push(j * fontSize);
           chars.push(charSet[Math.floor(Math.random() * charSet.length)]);
-          speeds.push(0.5 + Math.random() * 2);
+          speeds.push(charSpeedMin + Math.random() * (charSpeedMax - charSpeedMin));
           deflectionX.push(0);
           deflectionDecay.push(0.95 + Math.random() * 0.04);
         }
@@ -145,13 +161,13 @@ const DataRainBackground: React.FC<DataRainBackgroundProps> = ({
       
       // Update ripple effects
       rippleRef.current = rippleRef.current.filter(ripple => {
-        ripple.radius += 3;
-        ripple.opacity -= 0.015;
+        ripple.radius += rippleGrowthRate;
+        ripple.opacity -= rippleFadeRate;
         return ripple.opacity > 0;
       });
 
       // Draw ripples
-      ctx.lineWidth = 2;
+      ctx.lineWidth = rippleLineWidth;
       rippleRef.current.forEach(ripple => {
         ctx.globalAlpha = ripple.opacity;
         ctx.strokeStyle = rippleColor;
