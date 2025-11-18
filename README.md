@@ -312,15 +312,6 @@ Contributions are welcome. Recommended workflow:
 4. Open a PR with a clear explanation and screenshots.
 
 
-## Roadmap & recommended improvements
-
-- Add a `reducedMotion` / `performanceMode` prop across components and respect `prefers-reduced-motion`.
-- Add optional devicePixelRatio scaling with an opt-in prop.
-- Convert heavy scenes (3D) to optional dynamic imports so three.js is loaded only when needed.
-- Add Storybook with controls for each prop to allow visual verification in isolation.
-- Add an examples / demo site for live previews.
-
-
 ## License
 
 MIT — see LICENSE file.
@@ -332,5 +323,3 @@ Open an issue on the repository describing the problem with steps to reproduce a
 
 
 ---
-
-This README aims to be a complete, publish-ready entrypoint for the project. If you want, I can add a smaller Quickstart, copy-ready package.json example, or a Storybook config next.

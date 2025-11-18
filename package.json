@@ -2,9 +2,20 @@
   "name": "interactive-backgrounds",
   "version": "1.0.0",
   "description": "Interactive canvas-based background components for React",
+  "type": "module",
   "main": "dist/index.umd.js",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.umd.js"
+    }
+  },
   "scripts": {
     "build": "tsc && webpack --mode production",
     "typecheck": "tsc --noEmit",
@@ -14,9 +25,21 @@
   "keywords": [
     "react",
     "canvas",
-    "background",                                              "interactive"
+    "background",
+    "interactive",
+    "animation",
+    "particles",
+    "matrix",
+    "aurora",
+    "nebula",
+    "quantum"
   ],
-  "author": "Agbai C Joshua",                                "license": "MIT",
+  "author": "Agbai C Joshua",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TheACJ/interactive-backgrounds"
+  },
   "peerDependencies": {
     "react": "^18.0.0"
   },
