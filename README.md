@@ -330,7 +330,3 @@ MIT — see LICENSE file.
 
 Open an issue on the repository describing the problem with steps to reproduce and include browser/version information when relevant.
 
-
----
-
-This README aims to be a complete, publish-ready entrypoint for the project. If you want, I can add a smaller Quickstart, copy-ready package.json example, or a Storybook config next.
