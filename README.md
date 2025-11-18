@@ -8,7 +8,7 @@ NOTE: All components are client-only and perform rendering inside useEffect. The
 
 ---
 
-- Website: (your-site-here)
+- Website: (theacj.com.ng)
 - Package: interactive-backgrounds
 - License: MIT
 
@@ -321,5 +321,3 @@ MIT — see LICENSE file.
 
 Open an issue on the repository describing the problem with steps to reproduce and include browser/version information when relevant.
 
-
----
